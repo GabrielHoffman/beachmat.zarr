@@ -1,0 +1,20 @@
+Package: beachmat.zarr
+Version: 0.1.0
+Date: 2026-11-23
+Title: beachmat bindings for Zarr-backed matrices
+Description:
+    Extends beachmat to support initialization of tatami matrices from Zarr-backed arrays.
+    Dense 2-dimensional Zarr arrays (ZarrArray) and compressed sparse matrices stored in the
+    AnnData CSR/CSC layout (ZarrSparseMatrix) are read directly from C++, so downstream
+    tatami-based code can access them without block processing via DelayedArray.
+    Unlike HDF5, Zarr chunks are independent files, so extraction runs in parallel across threads.
+Encoding: UTF-8
+Authors@R: person("Gabriel", "Hoffman", role = c("aut", "cre"), email = "gabriel.hoffman@mssm.edu")
+Imports: methods, beachmat, ZarrArray, DelayedArray, Rcpp
+Suggests: testthat, Matrix, Rarr, BiocGenerics
+LinkingTo: Rcpp, assorthead, beachmat
+biocViews: DataRepresentation, DataImport, Infrastructure
+License: GPL-3
+NeedsCompilation: yes
+SystemRequirements: C++17, zlib; optionally c-blosc, zstd and lz4 for the corresponding Zarr codecs
+Config/roxygen2/version: 8.1.1

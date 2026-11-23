@@ -1,0 +1,50 @@
+#!/bin/sh
+# Detect optional compression libraries for Zarr chunk decoding.
+# zlib is always required; blosc, zstd and lz4 are enabled when found.
+# Override detection with BEACHMAT_ZARR_CPPFLAGS / BEACHMAT_ZARR_LIBS.
+
+CPPFLAGS_OUT=""
+LIBS_OUT=""
+FOUND=""
+
+if [ -n "${BEACHMAT_ZARR_LIBS}" ]; then
+    CPPFLAGS_OUT="${BEACHMAT_ZARR_CPPFLAGS}"
+    LIBS_OUT="${BEACHMAT_ZARR_LIBS}"
+    FOUND="(user-specified)"
+else
+    PKGCONF=""
+    if command -v pkg-config >/dev/null 2>&1; then
+        PKGCONF=pkg-config
+    elif [ -x /opt/homebrew/bin/pkg-config ]; then
+        PKGCONF=/opt/homebrew/bin/pkg-config
+    elif [ -x /usr/local/bin/pkg-config ]; then
+        PKGCONF=/usr/local/bin/pkg-config
+    fi
+
+    probe() {
+        # $1 = pkg-config name, $2 = macro, $3 = header, $4 = -l flag
+        if [ -n "${PKGCONF}" ] && ${PKGCONF} --exists "$1" 2>/dev/null; then
+            CPPFLAGS_OUT="${CPPFLAGS_OUT} $(${PKGCONF} --cflags "$1") -D$2"
+            LIBS_OUT="${LIBS_OUT} $(${PKGCONF} --libs "$1")"
+            FOUND="${FOUND} $1"
+            return
+        fi
+        for prefix in /opt/homebrew /usr/local /usr; do
+            if [ -f "${prefix}/include/$3" ]; then
+                CPPFLAGS_OUT="${CPPFLAGS_OUT} -I${prefix}/include -D$2"
+                LIBS_OUT="${LIBS_OUT} -L${prefix}/lib $4"
+                FOUND="${FOUND} $1"
+                return
+            fi
+        done
+    }
+
+    probe blosc TATAMI_ZARR_HAS_BLOSC blosc.h -lblosc
+    probe libzstd TATAMI_ZARR_HAS_ZSTD zstd.h -lzstd
+    probe liblz4 TATAMI_ZARR_HAS_LZ4 lz4.h -llz4
+fi
+
+echo "beachmat.zarr: optional codecs found:${FOUND:- none}"
+
+sed -e "s|@ZARR_CPPFLAGS@|${CPPFLAGS_OUT}|" -e "s|@ZARR_LIBS@|${LIBS_OUT}|" src/Makevars.in > src/Makevars
+exit 0

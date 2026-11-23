@@ -1,0 +1,4 @@
+^\.git$
+^README\.md$
+^src/Makevars$
+^.*\.Rproj$

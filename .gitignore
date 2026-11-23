@@ -1,0 +1,6 @@
+src/*.o
+src/*.so
+src/Makevars
+.Rproj.user
+*.tar.gz
+beachmat.zarr.Rcheck/
